@@ -1,0 +1,234 @@
+// ___________________FK :_________________
+
+// [ForeignKey("Team")]
+        // public int TeamId{get;set;}
+
+// public Team Teams {get;set;}
+
+// public ICollection<Player>Players {get;set;}
+
+// public int Id { get; set; }
+//    [Display(Name ="Department Name")]
+//    [Required(ErrorMessage = "Department Name Cannot Blank")]
+
+public string DeptName { get; set; } = null!;
+    // [Display(Name ="City")]
+    // [StringLength(25,MinimumLength =3,ErrorMessage ="City Must be more than 3 chars")]
+
+ // [Range(10000,90000,ErrorMessage="Salary between 10000 and 90000")]
+// [DataType(DataType.EmailAddress)]
+
+    // [DisplayFormat(ApplyFormatInEditMode = true,DataFormatString ="{0:yyyy-MM-dd}")]
+//[MaxLength(30)]
+    // [Column("DeptName")]
+
+_______________DOB Check_______________
+
+// public class DobCheck:ValidationAttribute
+// {
+//     public override bool IsValid(object value)
+//     {
+//              DateTime birthdate=Convert.ToDateTime(value);
+//              int year=birthdate.Year;
+//              int currentyear=DateTime.Now.Year;
+//              if(currentyear-year >=25)
+//                 return true;
+//             else
+//                 return false;
+//     }
+        
+    
+// }
+
+// _________________DbController_____________
+
+
+public class ProductController : Controller
+{
+    private readonly NetDbContext context;
+    public ProductController(NetDbContext _context)
+    {
+        context = _context;
+    }
+// _______________________CRUD__________________________
+
+    public IActionResult List()
+    {
+        var data = context.Product.ToList();
+        return View(data);
+    }
+
+     public IActionResult Display(int id)
+    {
+        var data = context.Product.Find(id);
+        return View(data);
+    }
+
+    public IActionResult Create()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public IActionResult Create(Product prod)
+    {
+        if(ModelState.IsValid)
+        {
+            context.Product.Add(prod);
+            context.SaveChanges();
+            return RedirectToAction("List");
+        }
+        return View();
+    }
+
+    public IActionResult Edit(int id)
+    {
+        return View();
+    }
+    [HttpPost]
+    public IActionResult Edit(Product prod)
+    {
+        if(ModelState.IsValid)
+        {
+            Product product=context.Product.Find(prod.Id);
+            product.Name=prod.Name;
+            product.Price=prod.Price;
+            product.Stock=prod.Stock;
+
+            context.SaveChanges();
+            return RedirectToAction("List");
+        }
+        return View();
+    }
+    
+    public IActionResult Delete(int id)
+    {
+        var data=context.Product.Find(id);
+        return View(data);
+    }
+    [HttpPost]
+    public IActionResult Delete(Product prod)
+    {
+        Product product=context.Product.Find(prod.Id);
+        context.Product.Remove(product);
+        context.SaveChanges();
+        return RedirectToAction("List");
+    }
+}
+
+
+//__________DbContext:____________________
+
+public class NetDbContext : DbContext
+// {
+//     public virtual DbSet<Product> Product {get;set;}
+
+//     public NetDbContext(){}
+//     public NetDbContext(DbContextOptions<NetDbContext> options): base(options)
+//     {
+
+//     }
+
+//     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//     {
+//         if(!optionsBuilder.IsConfigured)
+//         {
+//             optionsBuilder.UseSqlServer("User ID=sa;password=examlyMssql@123;server=localhost;Database=NetDb;trusted_connection=false;persist Security Info=False;Encrypt=False;");
+//         }
+//     }
+// }
+
+// _______________CRUD 2Tables_____________
+
+// public class DeptController : Controller{
+
+//     private readonly EmsDbContext context;
+//     public IActionResult Display (int Id)
+//     {
+//         var data = context.Employees.Where(e=>e.DeptId==Id);
+//         return View(data);
+//     }
+//     public DeptController(EmsDbContext _context)
+//     {
+//         context = _context;
+//     }
+
+//     public IActionResult List()
+//     {
+//         List<Department> data=null;
+//         try
+//         {
+//             data=context.Departments.ToList();
+//             if(data.Count==0)
+//             throw new Exception();
+//         }
+//         catch (System.Exception ex)
+//         {
+//             ViewBag.ErrorMessage="0 records Present";
+//             return View("Error");
+//         }
+//         // var data=context.Departments.ToList();
+//         return View(data);
+//     }
+//     public IActionResult Create()
+//     {
+//         return View();
+//     }
+//     [HttpPost]
+
+//     public IActionResult Create (Department department)
+//     {
+//         if(ModelState.IsValid)
+//         {
+//             context.Departments.Add(department);
+//             context.SaveChanges();
+//             return RedirectToAction("List");
+//         }
+//         return View();
+//     }
+// }
+
+
+//______________CRUD table 2 (Employee has one dept)from employee_______
+
+//public class EmpController : Controller
+// {
+//     private readonly EmsDbContext context;
+//     public EmpController(EmsDbContext _context)
+//     {
+//         context = _context;
+//     }
+
+//     public IActionResult List()
+//     {
+//         var data = context.Employees.Include("Dept").ToList();
+//         return View(data);
+//     }
+//     public IActionResult Create()
+//         {
+//             ViewBag.DeptId = new SelectList(context.Departments,"Id","DeptName");
+//             return View();
+//         }
+    
+//     [HttpPost]
+//     public IActionResult Create(Employee emp)
+//     {
+//         // if(ModelState.IsValid)
+//         {
+//             context.Employees.Add(emp);
+//             context.SaveChanges();
+//             return RedirectToAction("List");
+//         }
+//         ViewBag.DeptId = new SelectList(context.Departments,"Id","DeptName");
+//         return View(emp);
+//     }
+// }
+
+
+// ____________Program.cs
+
+//var conncectionString = builder.Configuration.GetConnectionString("mycon");
+ 
+//builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(conncectionString));
+ 
+
