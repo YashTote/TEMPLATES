@@ -1,0 +1,329 @@
+EF_Reference
+ 
+Models:- Domain Classes
+using System;
+using System.Collenctions.Generic;
+using System.ComponentModel.DataAnnotations;
+ 
+DbContext :-
+ 
+using System;
+using System.Collenctions.Generic;
+using System.EntityFrameworkCore;
+using System.EntityFrameworkCore.Design;
+using System.EntityFrameworkCore.SqlServer;
+ 
+Controller :-
+ 
+using System;
+using Microsoft.AspNetCore.Mvc;
+ 
+Program.cs :-
+ 
+using MVC_Name.Models;
+using System.EntityFrameworkCore;
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+
+
+Model:
+------
+ 
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+ 
+namespace MVC_Name.Models;
+ 
+public partial class Employee
+{
+    [Key]
+    public int Id { get; set; }
+ 
+    [Required(ErrorMessage ="Name is Required")]
+    public string Name { get; set; } = null!;
+ 
+    [Range(10000,90000,ErrorMessage ="Salary between 10000 and 90000")]
+    public int Salary { get; set; }
+ 
+    [Display(Name = "Email")]
+    [DataType(DataType.EmailAddress)]
+    public string Email { get; set; } = null!;
+ 
+    [DataType(DataType.Date)]
+    [DisplayFormat(ApplyFormatInEditMode = true,DataFormatString ="{0:yyyy-MM-dd}")]
+    [DobCheck(ErrorMessage = "You should be 25  year of age to work in LTI")]
+    public DateTime Dob { get; set; }
+ 
+    [Display(Name="Department")]
+    public int DeptId { get; set; }
+ 
+    public virtual Department Dept { get; set; } = null!;
+}
+ 
+---------------------------------------------------------------------------
+DbContext:
+----------
+ 
+using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
+ 
+namespace MVC_Name.Models;
+ 
+public class ABC_DbContext : DbContext
+{
+    public virtual DbSet<Dept> Depts{get;set;} 
+    public virtual DbSet<Employee> Employees{get;set;}
+ 
+    public EMS_CodeFirstDbContext(){}
+ 
+    public ABC_DbContext(DbContextOptions<ABC_DbContext>options) : base(options)
+    {
+    }
+ 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionBuilder)
+    {
+        if(!optionBuilder.IsConfigured)
+        {
+            optionBuilder.UseSqlServer("User ID=sa;password=examlyMssql@123; 	  	 			 	    	   	 	 		    server=localhost;Database=EmsDb;trusted_connection=false;Persist Security Info=False;Encrypt=False;");
+        }
+    }
+}
+
+
+---------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////
+
+
+Controllers :
+-------------
+ 
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
+ 
+using MVC_Name.Models;
+ 
+namespace MVC_Name.Controllers;
+ 
+public class XYZ_Controller : Controller
+{
+    private readonly ABC_DbContext context;
+    public XYZ_Controller(ABC_DbContext _context)
+    {
+        context = _context;
+    }
+ 
+    public IActionResult List()
+    {
+        List<Department> data=null;
+        try{
+ 
+            data = context.Departments.ToList();
+            if(data.Count==0)
+            throw new Exception();
+        }
+        catch(System.Exception ex)
+        {
+            ViewBag.ErrorMessage = "0 records present";
+            return View("Error");
+        }
+        return View(data);
+    }
+ 
+    public IActionResult Display(int id)
+    {
+        var data = context.Employees.Where(e=>e.DeptId==id);
+        return View();
+    }
+ 
+    public IActionResult Create()
+    {
+        return View();
+    }
+    [HttpPost]
+    public IActionResult Create(Department department)
+    {
+        if(ModelState.IsValid)
+        {
+            context.Departments.Add(department);
+            context.SaveChanges();
+            return RedirectToAction("List");
+        }
+        return View();
+    }
+    public IActionResult Edit(int id)
+    {
+        var data = context.Departments.Find(id);
+        return View(data);
+    }
+    [HttpPost]
+    public IActionResult Edit(Department department)
+    {
+        if(ModelState.IsValid)
+        {
+            Department dept = context.Departments.Find(department.Id);
+            dept.DeptName = department.DeptName;
+            dept.Location = department.Location;
+            context.SaveChanges();
+            return RedirectToAction("List");
+        }
+        return View();
+    }
+ 
+    public IActionResult Delete(int id)
+    {
+        var data = context.Departments.Find(id);
+        return View(data);
+    }
+    [HttpPost]
+    public IActionResult Delete(Departments department)
+    {
+            Departments dept = context.Departments.Find(department.Id);
+            context.Departments.Remove(dept);
+            context.SaveChanges();
+            return RedirectToAction("List");
+    }
+}
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+
+
+
+View_Syntax
+-----------------------------------------------------------------------------------------------
+List.cshtml :
+-------------
+@model IEnumerable<PordMvc.Models.Product>
+ 
+<h1>Product Listing</h1>
+<hr>
+@Html.ActionLink("Add Record","Create")
+<table class = 'table'>
+<thead>
+<th>@Html.DisplayNameFor(m=>m.Id)</th>
+<th>@Html.DisplayNameFor(m=>m.Name)</th>
+<th>@Html.DisplayNameFor(m=>m.Price)</th>
+<th>@Html.DisplayNameFor(m=>m.Stock)</th>
+<th>Display</th>
+<th>Edit</th>
+<th>Delete</th>
+</thead>
+<tbody>
+        @foreach (var data in @Model)
+        {
+<tr>
+<td>@data.Id</td>
+<td>@data.Name</td>
+<td>@data.Price</td>
+<td>@data.Stock</td>
+<td>@Html.ActionLink("Display","Display",new{id=@data.Id})</td>&nbsp;&nbsp;
+<td>@Html.ActionLink("Edit","Edit",new{id=@data.Id})</td>&nbsp;&nbsp;
+<td>@Html.ActionLink("Delete","Delete",new{id=@data.Id})</td>&nbsp;&nbsp;
+</tr>
+        }
+</tbody>
+</table>
+-----------------------------------------------------------------------------------------------
+Display :
+---------
+@model PordMvc.Models.Product
+ 
+<h2>Details of @Model.Name</h2>
+<p>@Html.DisplayNameFor(m=>m.Id) &nbsp;&nbsp;&nbsp; @Html.DisplayFor(m=>m.Id)</p>
+<p>@Html.DisplayNameFor(m=>m.Price) &nbsp;&nbsp;&nbsp; @Html.DisplayFor(m=>m.Price)</p>
+<p>@Html.DisplayNameFor(m=>m.Stock) &nbsp;&nbsp;&nbsp; @Html.DisplayFor(m=>m.Stock)</p>
+<hr>
+@Html.ActionLink("Back To List","List"); 
+-----------------------------------------------------------------------------------------------
+Create :
+--------
+@model PordMvc.Models.Product
+ 
+<h2>Adding Product</h2>
+<hr>
+@using (Html.BeginForm())
+{
+<div>
+        @Html.DisplayNameFor(m=>m.Id)
+        @Html.EditorFor(m=>m.Id)
+        @Html.ValidationMessageFor(m=>m.Id)
+</div>
+<div>
+        @Html.DisplayNameFor(m=>m.Name)
+        @Html.EditorFor(m=>m.Name)
+        @Html.ValidationMessageFor(m=>m.Name)
+</div>
+<div>
+        @Html.DisplayNameFor(m=>m.Price)
+        @Html.EditorFor(m=>m.Price)
+        @Html.ValidationMessageFor(m=>m.Price)
+</div>
+<div>
+        @Html.DisplayNameFor(m=>m.Stock)
+        @Html.EditorFor(m=>m.Stock)
+        @Html.ValidationMessageFor(m=>m.Stock)
+</div>
+<br>
+<input type = "Submit" value = "Save">
+}
+ 
+@Html.ActionLink("Back to List","List");
+-----------------------------------------------------------------------------------------------
+Edit :
+--------
+@model Product
+ 
+<h2>Editing Records</h2>
+<form method = 'post'>
+<br>
+<label asp-for="Id"></label>
+<input type ='text' asp-for ="Name">
+<br>
+<label asp-for="Name"></label>
+<input type ='text' asp-for ="Name">
+<span asp-validation-for = "Name" style = "color:red"></span>
+<br>
+<label asp-for="Price"></label>
+<input type ='text' asp-for ="Price">
+<span asp-validation-for = "Price" style = "color:red"></span>
+<br>
+<label asp-for="Stock"></label>
+<input type ='text' asp-for ="Stock">
+<span asp-validation-for = "Stock" style = "color:red"></span>
+<br>
+<input type = 'submit' value = 'save' style = "backgroung-color:cyan;">
+</form>
+<br>
+<br>
+<a asp-controller = "Product" asp-Action = "List">Back To List</a>
+-----------------------------------------------------------------------------------------------
+Delete :
+--------
+@model Product
+ 
+<h2>Deleting Record of @Model.Name </h2>
+<p>@Html.DisplayNameFor(m=>m.Id) : @Html.DisplayFor(m=>m.Id)</p>
+<p>@Html.DisplayNameFor(m=>m.Price) : @Html.DisplayFor(m=>m.Price)</p>
+<p>@Html.DisplayNameFor(m=>m.Stock) : @Html.DisplayFor(m=>m.Stock)</p>
+<hr>
+@using (Html.BeginForm())
+{
+<input type = "submit" value ="Delete ?" style = "background-color : red;">
+}
+@Html.ActionLink("Back To List", "List")
+
+has context menu
+
+
